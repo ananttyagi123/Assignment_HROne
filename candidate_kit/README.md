@@ -1,26 +1,31 @@
-# Candidate kit
+# Employee Attendance & Analytics API
 
-Read in this order:
+## Run locally
 
-1. `PROBLEM_STATEMENT.docx`: what you are asked to do, how it is evaluated.
-2. `openapi.yaml`: the API contract and the business rules (R1 - R10).
-3. `DATA_MODEL.md`: what is stored in MongoDB, with nine sample documents.
-4. `app/main.py`: the starter. Put **all** your code in this one file. It must start with `uvicorn app.main:app --port 8000`.
-5. `REVIEW.md`, `DECISIONS.md`: templates to fill in.
+Use Python 3.10 or newer and MongoDB 6.0 or newer. Install the dependencies:
 
-`sample_data/` holds the nine sample documents as MongoDB Extended JSON; `sample_seed.py` loads them. The grader's dataset is
-much larger and contains cases they do not show.
-
-## Local setup
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
 pip install -r requirements.txt
-cp .env.example .env            # set MONGO_URI / MONGO_DB (local docker: docker run -p 27017:27017 mongo:7)
-python sample_seed.py
-uvicorn app.main:app --port 8000 --reload
 ```
-MongoDB **6.0 or newer** is required (the grader uses 7.0). MongoDB Atlas free tier (M0) works.
 
-## Submit
-A public Git repository with `app/main.py`, `requirements.txt`, `REVIEW.md`, `DECISIONS.md` and a short `README.md`.
-No `.env`, no secrets, no Dockerfile.
+Set `MONGO_URI` and `MONGO_DB` in the environment or in a local `.env` file. Load the sample records if desired:
+
+```bash
+python sample_seed.py
+uvicorn app.main:app --port 8000
+```
+
+The app creates its indexes at startup. `/health` returns ready only when MongoDB responds to a ping.
+
+## Local edge-case data
+
+`local_test_data.py` is intentionally ignored by Git. Run it once to create a separate `<MONGO_DB>_b0_test` database with
+the no-log, mid-month join, overnight, tied-lateness, weekend, and missing-weekday cases. To test against those records,
+set `MONGO_DB` to that suffixed database before starting the app. The script does not drop or modify the configured base
+database.
+
+## Completion
+
+The employee, attendance, monthly analytics, department summary, late leaderboard, department trend, and explain
+endpoints are implemented. No assignment endpoints are currently unfinished.

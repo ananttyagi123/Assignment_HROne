@@ -1,7 +1,13 @@
-# DECISIONS.md  (about 150-200 words in total - plain language, your own words)
-
-1. **Indexes.** Which indexes did you create, and which query or guarantee does each one serve? Which one did you consider and reject?
-2. **Punch-in race.** Two identical punch-in requests arrive at the same instant. Walk through exactly what happens in your code.
-3. **Ties.** Two employees are tied on late minutes at the cutoff of `limit`. What does your leaderboard return, and why?
-4. **Headcount.** How does your department summary make sure employees with zero logs are counted?
-5. **One thing you would change** if this had to serve 100x the data.
+1. **Indexes.** Startup creates unique employee-code and `(emp_code, date)` indexes for identity and race safety.
+   Attendance date/employee, employee/punch-in, and status/date indexes support listing and punch-out. Employee
+   join-date and department/join-date indexes support headcount matching. I rejected a work-hours index: analytics
+   aggregate work hours, but never search or sort by them.
+2. **Punch-in race.** Each request inserts directly. MongoDB's unique key allows one insert for an employee and
+   attendance date; competing inserts raise `DuplicateKeyError`, which the API translates to 409.
+3. **Ties.** The leaderboard ranks with MongoDB `$rank`, then filters by rank. Employees tied at the limit's rank are
+   all returned, with employee code providing stable display order.
+4. **Headcount.** Department summary starts from employees joined by the period end, then looks up that month's logs.
+   Employees with no logs remain in the aggregation and count toward headcount.
+5. **Scale and rounding.** At 100 times the data, I would move repeated monthly analytics to maintained summaries and
+   measure index and pipeline costs before choosing a shard key. Trend moving averages use unrounded daily rates; the
+   API applies half-up rounding to four decimals only to the displayed rate and average.
